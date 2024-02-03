@@ -1,0 +1,564 @@
+---
+title: 'Exam Template: Statistical Inference'
+author: "23069818"
+date: ' Semester 1 Sep2023 group'
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# do not change these options
+knitr::opts_chunk$set(echo = TRUE) # do not edit this line.
+knitr::opts_chunk$set(error = TRUE,comment=NA) # do not edit this line.
+```
+
+# Instructions to students
+
+Save this template as your studentID.Rmd; you will upload this file as part of your submission. Change the author information on line 3 of this file to your **student ID**. Do not change the authorship to your name.
+
+Your should knit this file to a document **Word** format. The Word document is what will be marked!
+
+Any changes that you make to the data (e.g. variable name changes) should be made entirely within R.
+
+The subsubsections labelled **Answer:** indicate where you should put in your written Answers. The template also provides blank code chunks for you to complete your Answers; you may choose to add additional chunks if required.
+
+This is an individual assessment: do not work with any other person during this exam. Text-matching software will be used on all submissions. 
+
+# Instructions for submission 
+
+You must submit your assignment before the stated deadline by electronic submission through Blackboard.
+
+- It is a good idea to save your work early and frequently to ensure you have no issues with the submission portal. Multiple submissions can be made to the portal, but only the final one will be accepted.
+
+- It is your responsibility to submit the exam in a format stipulated above. Your marks may be affected if your tutor cannot open or properly view your submission.
+
+- Do not leave submission to the very last minute. Always allow time in case of technical issues.
+
+- The date and time of your submission is taken from the Blackboard server and is recorded when your submission is complete, not when you click Submit.
+
+- It is essential that you check that you have submitted the correct file(s), and that each complete file was received. Submission receipts are accessed from the Coursework tab.
+
+There is no late submission permitted on this timed assessment. Ensure that you submit your submission in good time. Neither the module leader nor module team can accept late assessments, do not ask them to do so.
+
+
+
+# Background to the research
+
+The head of school for a four year degree course has provided you with some data based on student demographics, marks and graduate outcomes. 
+
+They have asked you if the data could reveal findings that may be relevant for monitoring student performance and outcomes.
+
+
+# Data instructions
+
+Your individual data set is accessed via Blackboard >>> Assessments >>> Dewis Data For Exam.
+
+You must only analyse the specified data. No other data is to be used for this assessment.
+
+All data manipulation and analyses must be done within R.
+
+# Data structure
+
+The variables collected for each student are:
+
+studentID – a unique student identifier issued to each student at the start of the course
+
+outcome – employment status one year after finishing the course (E1 = employed in a graduate role, E2 =Employed in a non-graduate role, Education = in full time further education, Unemployed = not yet employed)
+
+age – age at start of course
+
+gender – gender at start of course
+
+language – score given for student level of English proficiency determined as part of the application process for the course (minimum 0, maximum 10)
+
+feedback – score given by student for their satisfaction of the course when asked at the end of Year 4 (minimum 0, maximum 10)
+
+Mark1 - Mark for Year 1 (out of 100)
+
+Mark2 - Mark for Year 2 (out of 100)
+
+Mark3 - Mark for Year 3 (out of 100)
+
+Mark4 – Mark for Year 4 (out of 100)
+
+
+
+```{r libraries, include=FALSE}
+# load any required libraries / additional files here
+
+library(ggplot2)
+library(corrplot)
+library(car)
+# library(e1071) # for skewness curtosis. might not need it now.
+library(tidyverse)
+
+```
+
+
+# QUESTIONS START HERE
+
+# Question 1: Data Preparation 
+
+a) Ensure you have prepared your knitted Word document as per Instructions to Students
+
+b) You should load the data in R, describe and perform any actions with respect to:
+
+-any manipulation of the data structure
+
+-missing values
+
+-ensuring data is valid
+
+**(10 marks)**
+
+### Answer:
+```{r data}
+# load the dataset here
+
+data <- read.csv("contents.csv")
+
+```
+
+```{r Q1 }
+# further data preparation here
+
+# Initial summary of the dataset -
+str(data)
+summary(data)
+
+cat("Firstly, there is a max age of 2001, which must be a mistake [the student might have provided the birth-year instead]. But, instead of assuming, I'll impute (using median age) the age column for outliers.")
+outlier_rows <- data[data$age > 100, ]
+data$age[data$age > 100] <- median(data$age, na.rm = TRUE)
+
+cat("Secondly, Checking missing values -")
+missing_values <- colSums(is.na(data))
+columns_with_missing <- names(missing_values[missing_values > 0])
+print(columns_with_missing)
+
+
+cat("For the missing values in language and feedback, I'll impute missing values with the mean -")
+data$language[is.na(data$language)] <- mean(data$language, na.rm = TRUE)
+data$feedback[is.na(data$feedback)] <- mean(data$feedback, na.rm = TRUE)
+
+# Lastly, Verifying changes
+summary(data)
+
+```
+
+
+
+# Question 2 
+
+A colleague suggests the following research question,
+
+ “do students perform differently in their final year relative to their performance at the start?”
+
+To assess this research question:
+
+- create a new variable for the difference between Year 4 mark and Year 1 Mark.
+
+- show and interpret a confidence interval for the mean difference, in context of the research question.
+
+**(12 marks)**
+
+### Answer: 
+
+
+
+```{r Q2}
+
+# For finding confidence interval for the mean difference - 
+performance_difference <- data$Year4 - data$Year1
+mean_difference <- mean(performance_difference, na.rm = TRUE)
+se_difference <- sd(performance_difference, na.rm = TRUE) / sqrt(length(performance_difference))
+
+# 95% confidence interval
+ci <- qt(c(0.025, 0.975), df = length(performance_difference) - 1) * se_difference
+ci_lower <- mean_difference + ci[1]
+ci_upper <- mean_difference + ci[2]
+
+# Print the results
+cat("Mean Difference:", mean_difference, "\n")
+cat("Standard Error of the Mean Difference:", se_difference, "\n")
+cat("95% Confidence Interval:", "[" , ci_lower, ",", ci_upper, "]\n")
+
+cat("
+    Interpretation : 
+      We can conclude with 95% confidence that, on average, 
+      students' marks in their final year are higher than their marks at the start. 
+      The positive mean difference and a confidence interval entirely above zero suggest 
+      a statistically significant improvement in performance from the beginning to the final year.
+    ")
+
+
+```
+
+
+
+# Question 3
+
+Another research question is suggested, 
+
+“is there a relationship between student marks across each of the years?”
+
+- Assess this research question by showing and interpreting the linear correlations between the marks for each of the four years.
+
+Marks are awarded for well-designed output, and the interpretation of the output.
+
+**(12 marks)**
+
+### Answer:
+
+
+
+```{r Q3}
+
+# Linear correlations between marks for each pair of years
+cor_test_year1_year2 <- cor.test(data$Year1, data$Year2)
+cor_test_year2_year3 <- cor.test(data$Year2, data$Year3)
+cor_test_year3_year4 <- cor.test(data$Year3, data$Year4)
+
+par(mfrow = c(1, 3))
+
+# function to calculate and plot correlation with confidence interval
+plot_cor_with_ci <- function(x, y, main_title) {
+  cor_test_result <- cor.test(x, y)
+  cor_coef <- cor_test_result$estimate
+  ci_lower <- cor_test_result$conf.int[1]
+  ci_upper <- cor_test_result$conf.int[2]
+
+  plot(x, y, main = main_title, xlab = names(data)[which(names(data) == names(x))], ylab = names(data)[which(names(data) == names(y))])
+  abline(lm(y ~ x), col = "red")
+
+  text(x = max(x), y = max(y), labels = paste("Correlation:", round(cor_coef, 3), "\nCI: [", round(ci_lower, 3), ",", round(ci_upper, 3), "]"), pos = 2)
+}
+
+
+# Scatter plots with regression lines for each pair of years
+plot_cor_with_ci(data$Year1, data$Year2, "Year1 vs Year2")
+plot_cor_with_ci(data$Year2, data$Year3, "Year2 vs Year3")
+plot_cor_with_ci(data$Year3, data$Year4, "Year3 vs Year4")
+par(mfrow = c(1, 1))
+
+
+# Summary and interpretation
+cat("Correlation between Year1 and Year2:", cor_test_year1_year2$estimate, "\n")
+cat("  95% Confidence Interval: [", cor_test_year1_year2$conf.int[1], ",", cor_test_year1_year2$conf.int[2], "]\n")
+
+cat("Correlation between Year2 and Year3:", cor_test_year2_year3$estimate, "\n")
+cat("  95% Confidence Interval: [", cor_test_year2_year3$conf.int[1], ",", cor_test_year2_year3$conf.int[2], "]\n")
+
+cat("Correlation between Year3 and Year4:", cor_test_year3_year4$estimate, "\n")
+cat("  95% Confidence Interval: [", cor_test_year3_year4$conf.int[1], ",", cor_test_year3_year4$conf.int[2], "]\n")
+
+# Interpretation
+cat("\nInterpretation:\n")
+cat("- Year1 and Year2 & Year2 and Year3: The correlation coefficient of", round(cor_test_year1_year2$estimate, 3), "and", round(cor_test_year2_year3$estimate, 3), "indicates a positive but weak correlation. This suggests that there is a positive tendency, but the relationship is not very strong.\n")
+cat("- Year3 and Year4: The correlation coefficient of", round(cor_test_year3_year4$estimate, 3), "indicates a moderate positive correlation. This is a relatively stronger positive relationship between the marks of these two years compared to the previous pairs.\n")
+
+# In summary
+cat("\nIn summary, there is a positive correlation between the marks across different years, with the strength of the correlation increasing from Year1 to Year4. However, all correlations are still in the range of being considered as weak to moderate.")
+
+
+```
+
+
+# Question 4
+
+A further research question states, 
+
+“can the final year mark be predicted based on one mark for a previous year?”
+
+Produce simple linear regression with Year 4 mark as the dependent variable, and only one independent variable.
+
+Your answer should include:
+
+- justification for the choice of explanatory variable, including any additional supporting exploratory data analyses used to make the choice;
+
+- interpretation of the slope (gradient) coefficient;
+
+- comment on the r-square value, and the validity of model assumptions.
+
+
+**(23 marks)**
+
+### Answer:
+
+
+```{r Q4}
+
+# check_residuals is used for checking the validity of model assumptions.
+check_residuals <- function(model, title) {
+  par(mfrow = c(2, 2))
+  
+  plot(model, which = 1, main = paste("Residuals vs Fitted -", title))
+  plot(model, which = 2, main = paste("Normal Q-Q Plot -", title))
+  plot(model, which = 3, main = paste("Scale-Location Plot -", title))
+  abline(h = 0, col = "red", lty = 2)
+  plot(model, which = 5, main = paste("Residuals vs Leverage -", title))
+  
+  par(mfrow = c(1, 1))
+}
+
+# FOr printing summary of a linear regression model in terms of a given year vs year4 -
+check_year <- function(yearname) {
+  
+  cat("\n\n             Checking", yearname, " as the independent variable - \n\n")
+  if (!(yearname %in% colnames(data))) {
+    stop("Invalid variable name. Please provide a valid column name from the dataset.")
+  }
+  
+  ggplot(data, aes_string(x = yearname, y = "Year4")) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "blue") +
+    labs(title = paste0("Scatter Plot of Year 4 Marks vs. ", yearname),
+     x = yearname,
+     y = "Year 4 Marks") +
+    theme_minimal()
+
+  model <- lm(Year4 ~ get(yearname), data = data)
+  summary_text <- capture.output(summary(model))
+  cat("\nSummary of Linear Regression Model:\n")
+  cat(summary_text, sep = "\n")
+  check_residuals(model, paste(yearname, "Model"))
+  
+  return(model)
+}
+
+
+
+cat("\n------------------------YEAR 1 as independent var----------------------------\n")
+
+plot_cor_with_ci(data$Year1, data$Year4, "Year1 vs Year4")
+check_year("Year1")
+cat("
+        1. Year1 as the Independent Variable:
+   - The linear regression model for Year1 as the independent variable is statistically significant (p-value < 0.05).
+   - The intercept is 32.79, indicating that when Year1 is zero, the predicted Year4 mark is 32.79.
+   - The coefficient for Year1 is 0.64, suggesting that for each additional unit increase in Year1 marks, the Year4 marks are expected to increase by an average of 0.64.
+   - The R-squared value is 0.3184, indicating that around 31.84% of the variability in Year4 marks is explained by the model.
+   - The p-value for the F-statistic is highly significant (< 2.2e-16), suggesting that the overall model is significant.
+   ")
+
+cat("\n-----------------------YEAR 2 as independent var------------------------\n")
+plot_cor_with_ci(data$Year2, data$Year4, "Year2 vs Year4")
+check_year("Year2")
+cat("
+        2. Year2 as the Independent Variable:
+   - The linear regression model for Year2 as the independent variable is not statistically significant at the 0.05 significance level (p-value = 0.05587).
+   - The intercept is 59.96, and the coefficient for Year2 is 0.14. However, the p-value for the coefficient suggests that Year2 may not be a significant predictor of Year4 marks.
+   - The R-squared value is 0.01901, indicating that only 1.9% of the variability in Year4 marks is explained by the model.
+   - The p-value for the F-statistic is 0.05587, suggesting that the overall model is not as significant compared to the model with Year1.
+    ")
+
+
+cat("\n-----------------------YEAR 3 as independent var----------------------------\n")
+plot_cor_with_ci(data$Year3, data$Year4, "Year3 vs Year4")
+check_year("Year3")
+cat("
+        3. Year3 as the Independent Variable:
+   - The linear regression model for Year3 as the independent variable is statistically significant (p-value < 0.05).
+   - The intercept is 39.28, and the coefficient for Year3 is 0.39. This suggests that for each additional unit increase in Year3 marks, the Year4 marks are expected to increase by an average of 0.39.
+   - The R-squared value is 0.1651, indicating that around 16.51% of the variability in Year4 marks is explained by the model.
+   - The p-value for the F-statistic is highly significant (p-value = 4.536e-09), suggesting that the overall model is significant.
+    ")
+
+cat("\n--------------------- Why Year 1 is the best pick --------------------------\n")
+
+
+cor_matrix <- cor(data[, c("Year1", "Year2", "Year3", "Year4")])
+corrplot::corrplot(cor_matrix, type = "upper", method = "number", tl.cex = 0.7)
+mean_diff_year1_year4 <- t.test(data$Year1, data$Year4)$estimate[1]
+cat("\n\nMean Difference between Year1 and Year4: ", mean_diff_year1_year4)
+cat("\nStandard Error of the Mean Difference: ", t.test(data$Year1, data$Year4)$stderr)
+cat("\n95% Confidence Interval: [", t.test(data$Year1, data$Year4)$conf.int[1], ", ", t.test(data$Year1, data$Year4)$conf.int[2], "]\n")
+pairs(data[, c("Year1", "Year2", "Year3", "Year4")])
+check_residuals_year1 <- check_year("Year1")
+
+
+
+cat("\n\nJustification for Choosing Year1 as the Explanatory Variable:\n")
+cat("\n- The correlation matrix and scatterplot matrix show positive correlations between Year1 and subsequent years.")
+cat("\n- Year1 has the highest correlation with Year4 among all pairs.")
+cat("\n- Year1 is statistically significant (p-value < 0.05) with the highest R-squared value (31.84%) among Year1, Year2, and Year3.")
+cat("\n- Year2 appears to be less relevant in predicting Year4 marks, as indicated by its non-significant p-value and lower R-squared value.")
+cat("\n- The residuals plot shows that the assumptions of linearity, independence, homoscedasticity, and normality are reasonable for the Year1 model.")
+cat("\n- Considering these factors, Year1 is a justifiable choice for predicting Year4 marks.")
+
+
+
+```
+
+
+
+
+# Question 5:  Report
+
+
+Clearly state one **alternative new** research question based on the full original data set supplied to you. Explain why this is a worthwhile research question to consider.
+
+You are required to write a short report for the client showing some analyses based only on the research question you have selected. 
+
+In your report you may wish to include a number of the following: exploratory data analyses; a hypothesis test; data modelling; discussion of limitations; how you could extend the research if given more time.
+
+To clarify, your answer to this question must be a report based on **your analyses of your own research question** arising from the data, which is not addressed in the questions above. This report should contain a maximum 5 outputs (i.e. graphics + tables) and a maximum of 500 words.
+
+
+**(35 marks)**
+
+### Answer:
+
+
+```{r Q5}
+
+
+    # Okay, the most interesting question now. I've thought of several questions, here are 3 interesting ones :
+    # 1. Is there a significant difference in performance between male and female students?
+    # 2. Does age have a correlation with academic performance?
+    # 3. Is there a relationship between language proficiency and academic outcomes?
+    # 4. How does feedback relate to academic performance?
+    
+    # I'll tackle the first question, Is there a significant difference in performance between male and female students?
+    # I can think of two tests right now - a) t-test (if normal dist), b) Mann-Whitney U test.
+    # So, firstly, I'll use histogram and QQ plots to check normality.Based on the result, I'll pick which test to use.
+
+
+data_male <- subset(data, gender == "Male")
+data_female <- subset(data, gender == "Female")
+
+
+# Function to create histograms and Q-Q plots
+create_plots <- function(data, group) {
+  
+  cat("\n\n", "Histogram and Q-Q Plot for", group, ":\n")
+  data$Sum_Year <- rowSums(data[, c("Year1", "Year2", "Year3", "Year4")], na.rm = TRUE)
+  
+  ggplot(data, aes(x = Sum_Year)) +
+    geom_histogram(binwidth = 5, fill = "blue", color = "black", alpha = 0.7) +
+    labs(title = paste("Histogram of Sum of Year1, Year2, Year3, Year4 for", group),
+         x = "Sum of Year1, Year2, Year3, Year4",
+         y = "Frequency") +
+    theme_minimal()
+
+  qqPlot(data$Sum_Year, main = paste("Q-Q Plot of Sum of Year1, Year2, Year3, Year4 for", group))
+}
+
+create_plots(data_male, "Male")
+create_plots(data_female, "Female")
+
+
+    
+    # We can see that the data follows a normal distribution, so, I'll conduct a t-test to compare 
+    # the mean and median marks of male and female students. For sake of convention, i'll verify normality again while conducting the t-test.
+
+
+
+conduct_t_test <- function(group1, group2, variable) {
+  cat("\n\n", "T-Test for", variable, "between", group1$gender[1], "and", group2$gender[1], ":\n")
+
+  # Checking normality assumption using Shapiro-Wilk test
+  shapiro_test_group1 <- shapiro.test(group1[[variable]])
+  shapiro_test_group2 <- shapiro.test(group2[[variable]])
+
+  cat("\n", "Shapiro-Wilk Normality Test Results:\n")
+  cat("Group", group1$gender[1], "- p-value:", shapiro_test_group1$p.value, "\n")
+  cat("Group", group2$gender[1], "- p-value:", shapiro_test_group2$p.value, "\n")
+
+
+  t_test_mean <- t.test(group1[[variable]], group2[[variable]])
+  cat("\n", "T-Test for Mean:\n")
+  cat("t-value:", round(t_test_mean$statistic, 2), "\n")
+  cat("p-value:", t_test_mean$p.value, "\n")
+
+
+  wilcox_test_median <- wilcox.test(group1[[variable]], group2[[variable]])
+  cat("\n", "Wilcoxon Rank-Sum Test for Median:\n")
+  cat("W statistic:", wilcox_test_median$statistic, "\n")
+  cat("p-value:", wilcox_test_median$p.value, "\n")
+}
+
+
+conduct_t_test(data_male, data_female, "Year1")
+conduct_t_test(data_male, data_female, "Year2")
+conduct_t_test(data_male, data_female, "Year3")
+conduct_t_test(data_male, data_female, "Year4")
+
+
+t_test_results <- data.frame(
+  Year = c("Year1", "Year2", "Year3", "Year4"),
+  t_value = c(2.01, 0.49, -2.02, 1.41),
+  p_value = c(0.0471, 0.6239, 0.0451, 0.1614)
+)
+
+# Bar plot with error bars
+ggplot(t_test_results, aes(x = Year, y = t_value, fill = Year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black", alpha = 0.7) +
+  geom_errorbar(aes(ymin = t_value, ymax = t_value, color = Year), width = 0.2, position = position_dodge(0.9)) +
+  labs(title = "T-Test Results between Male and Female",
+       x = "Year",
+       y = "t-value") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+calculate_mean_median_difference <- function(data1, data2, variable) {
+  cat("\n", "Mean and Median Difference for", variable, "between Male and Female:\n")
+  
+  # Calculate mean difference
+  mean_diff <- mean(data1[[variable]]) - mean(data2[[variable]])
+  cat("Mean Difference:", round(mean_diff, 2), "\n")
+  
+  # Calculate median difference
+  median_diff <- median(data1[[variable]]) - median(data2[[variable]])
+  cat("Median Difference:", round(median_diff, 2), "\n")
+}
+
+
+calculate_mean_median_difference(data_male, data_female, "Year1")
+calculate_mean_median_difference(data_male, data_female, "Year2")
+calculate_mean_median_difference(data_male, data_female, "Year3")
+calculate_mean_median_difference(data_male, data_female, "Year4")
+
+
+cat("
+    In terms of the T test, in Year1, there is a mean difference (p = 0.047), favoring females. Year2 shows no significant mean difference (p = 0.62). Year3 indicates a significant mean difference (p = 0.045), favoring males. In Year4, no significant mean difference is observed (p = 0.16). 
+    The analysis indicates varying academic performance between male and female students across different years. In Year1, a significant mean difference exists, but not in median. Year2 shows no significant differences in mean or median. Year3 exhibits significant differences in both mean and median, while Year4 shows no significant differences. 
+    The significance of these differences varies across the academic years, highlighting the importance of considering multiple factors when assessing the overall performance disparity between male and female students.
+
+    ")
+```
+
+
+
+# Question 6
+
+Describe how you have applied principles of reproducible research in this submission (maximum 100 words).
+
+Marks are awarded for identification of appropriate reproducible research principles, only if also evidenced throughout your submission that they have been applied.
+
+ 
+**(8 marks)**
+
+### Answer:
+
+Here's how I applied The principles of reproducible research -
+
+  - Structured Code: The code is organized into functions with comments, enhancing readability.
+  - Stepwise Execution: Each analysis step is presented sequentially, aiding understanding and reproducibility.
+  - Clear Documentation and Consistent Variable Naming: Explanations accompany code snippets, ensuring transparency in methodology.
+  - Modular Approach: Functions are used for distinct tasks, facilitating easy replication and modification.
+  - Transparency in Interpretation: Interpretations of statistical tests and results are provided for clarity.
+  - Error Handling: Anticipation of potential errors and explanations on error resolution contribute to robustness.
+
+In general, I've tried to explain my thought processes while writing my answers, so even if my statistical inferences/calculations are wrong, my work can re-used by my peers.
+I hope my approach promotes transparency, allowing users to understand and reproduce the analyses easily.
+
+
+# End matter - Session Information
+
+Do not edit this part. Make sure that you compile your document so that the information about your session (including software / package versions) is included in your submission.
+
+```{r}
+sessionInfo()
+```

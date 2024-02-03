@@ -1,0 +1,321 @@
+---
+title: 'Mock Exam Template: Statistical Inference'
+author: "STUDENT ID"
+date: 'Mock Exam day'
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# do not change these options
+knitr::opts_chunk$set(echo = TRUE) # do not edit this line.
+knitr::opts_chunk$set(error = TRUE,comment=NA) # do not edit this line.
+```
+
+# Instructions to students
+
+Save this template as your studentID.Rmd; you will upload this file as part of your submission. Change the information on line 3 of this file changing the author information to your **student ID**. Do not change the authorship to your name.
+
+Your should knit this file to a document **Word** format. The Word document is what will be marked!
+
+Any changes that you make to the data (e.g. variable name changes) should be made entirely within R.
+
+The subsubsections labelled **Answer:** indicate where you should put in your written Answers. The template also provides blank code chunks for you to complete your Answers; you may choose to add additional chunks if required.
+
+This is an individual assessment: do not work with any other person during this exam. Text-matching software will be used on all submissions. 
+
+# Instructions for submission 
+You must submit your assignment before the stated deadline by electronic submission through Blackboard.
+
+- It is a good idea to save your work early and frequently to ensure you have no issues with the submission portal. Multiple submissions can be made to the portal, but only the final one will be accepted.
+
+- It is your responsibility to submit the exam in a format stipulated aboveYour marks may be affected if your tutor cannot open or properly view your submission.
+
+- Do not leave submission to the very last minute. Always allow time in case of technical issues.
+
+- The date and time of your submission is taken from the Blackboard server and is recorded when your submission is complete, not when you click Submit.
+
+- It is essential that you check that you have submitted the correct file(s), and that each complete file was received. Submission receipts are accessed from the Coursework tab.
+
+There is no late submission permitted on this timed assessment. Ensure that you submit your submission in good time. Neither the module leader nor module team can accept late assessments, do not ask them to do so.
+
+
+
+# Background to the research
+
+See Dewis
+
+# Data instructrions
+
+Your individual data set is accessed via Blackboard >>> Assessments >>> Dewis Data For Exam.
+
+You must only analyse the specified data. No other data is to be used for this assessment.
+
+All data manipulation and analyses must be done within R.
+
+# Data structure
+
+See Dewis
+
+
+
+```{r libraries, include=FALSE}
+# load any required libraries / additional files here
+
+```
+
+```{r data}
+# load dataset here
+
+data<-read.csv("../contents.csv")
+
+data
+
+```
+
+# QUESTIONS START HERE
+
+# Question 1: File & Data Preparation 
+
+Ensure you have prepared your submission file as per **Instructions to Students**.
+
+Implement the required data preparation.
+
+-	Create a new variable for length of service taking into account LOS years and LOS months. 
+
+-	For the Likert questions Q1-Q5 a ‘communication score’ is calculated by taking the average response across each of the five questions.
+
+-	For the Likert questions Q6-Q10 a ‘training score’ is calculated by taking the average response across each of the five questions. 
+
+-	For the Likert questions Q11-Q15 a ‘working score’ is calculated by taking the average response across each of the five questions.
+
+-	LOS years, LOS months, and Q1-Q15 could then be considered redundant variables.
+
+
+**(10 marks)**
+
+### Answer:
+
+
+
+```{r Q1}
+
+data$length_of_service = data$LOSyears + data$LOSmonths / 12
+
+# Calculating communication score
+data$communication_score = rowMeans(data[, c("Q1", "Q2", "Q3", "Q4", "Q5")])
+
+# Calculating training score
+data$training_score = rowMeans(data[, c("Q6", "Q7", "Q8", "Q9", "Q10")])
+
+# Calculating working score
+data$working_score = rowMeans(data[, c("Q11", "Q12", "Q13", "Q14", "Q15")])
+
+
+data = data[, !(names(data) %in% c("LOSyears", "LOSmonths", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10" , "Q11", "Q12", "Q13", "Q14", "Q15"))]
+
+```
+
+# Question 2 
+
+By producing relevant descriptive statistics for ‘age’, ‘hours’, and ‘gender’ or otherwise, state what these variables reveal in relation to any further required data preparation prior to analyses, and implement any changes as necessary.
+
+
+**(5 marks)**
+
+### Answer: 
+
+
+
+```{r Q2}
+summary(data$age)
+summary(data$hours)
+table(data$age)
+table(data$hours)
+table(data$gender)
+
+```
+```{r Q2(histogram)}
+# Histogram for 'age'
+hist(data$age, main = "Histogram of Age", xlab = "Age")
+
+# Boxplot for 'age'
+boxplot(data$age ~ data$gender, main = "Boxplot of Age by Gender", xlab = "Gender", ylab = "Age")
+
+# Boxplot for 'hours'
+boxplot(data$age ~ data$hours, main = "Boxplot of Age by Hours", xlab = "Hours", ylab = "Age")
+
+#cor_matrix <- cor(data[, c("age", "age")])
+#print(cor_matrix)
+
+
+library(dplyr)
+
+# Summary table for 'age' by 'gender'
+age_summary <- data %>%
+  group_by(gender) %>%
+  summarise(mean_age = mean(age), median_age = median(age))
+
+print(age_summary)
+
+
+
+```
+
+
+
+
+
+# Question 3
+
+It is hypothesised that the mean ‘working score’ is 3. Perform an appropriate statistical test of this hypothesis and produce a confidence interval for the mean ‘working score’.
+
+Your answer should include appropriate statistical hypotheses, output, interpretation and statistical summary.
+
+
+**(10 marks)**
+
+### Answer:
+
+
+
+```{r Q3}
+
+# Extract 'working score' data
+working_score <- data$working_score
+
+# Perform one-sample t-test
+t_test_result <- t.test(working_score, mu = 3)
+
+# Print the test result
+print(t_test_result)
+
+
+```
+Hypothesis Testing:
+Statistical Hypotheses:
+Null Hypothesis (Ho): The mean 'working score' is equal to 3 (μ=3).
+Alternative Hypothesis (Ha): The mean 'working score' is not equal to 3 (μ≠3).
+
+Test Results:
+t-value: The calculated t-statistic is 2.7234.
+Degrees of Freedom (df): 104.
+p-value: The p-value associated with the test is 0.007579.
+
+Confidence Interval:
+95% Confidence Interval: The 95% confidence interval for the mean 'working score' is (3.061105,3.388419).
+
+Sample Estimate:
+Sample Mean: The sample mean of the 'working score' is 3.224762.
+
+Summary:
+Statistical Significance:
+
+The p-value (0.007579) is less than the commonly used significance level of 0.05, indicating strong evidence against the null hypothesis. Therefore, you would reject the null hypothesis and conclude that the mean 'working score' is statistically different from 3 at the 0.05 significance level.
+
+Effect Size and Confidence Interval:
+
+The calculated t-value (2.7234) indicates a moderate-to-large effect size.
+The 95% confidence interval for the mean 'working score' does not include the hypothesized value of 3, further supporting the rejection of the null hypothesis.
+
+Practical Implications:
+
+Based on the sample data, the mean 'working score' is estimated to be 3.224762, and the true population mean is likely to fall within the 95% confidence interval of (3.061105,3.388419).
+
+In conclusion, there is sufficient statistical evidence to reject the null hypothesis and conclude that the mean 'working score' is different from 3. The sample data suggest that the mean 'working score' is estimated to be approximately 3.22 with a 95% confidence interval of (3.06,3.39).
+
+# Question 4
+
+Produce relevant descriptive statistics and exploratory graphics to inform which employees are likely to ‘leave’. Ensure that each output has appropriate interpretation.
+
+Marks are awarded for well-designed output, and the interpretation of the output.
+
+**(10 marks)**
+
+### Answer:
+
+
+```{r Q4}
+
+# Descriptive statistics
+summary(data$working_score)
+
+# Exploratory graphics (e.g., histogram, boxplot)
+hist(data$working_score)
+boxplot(data$working_score ~ data$leave)
+
+```
+
+
+
+
+# Question 5:  
+
+Show and interpret relevant linear correlations within this data set, with particular focus on the variable ‘working score’.
+
+Marks are awarded for well-designed output, and the interpretation of the output.
+
+
+
+**(10 marks)**
+
+### Answer:
+
+
+```{r Q5}
+
+correlation_matrix = cor(data[, c("working_score", "age", "hours")])
+correlation_matrix
+
+```
+
+
+# Question 6:  
+
+Create a linear regression to model ‘working score’, and assess the model. Your answer must include a regression model with ‘working score’ as the dependent variable, and an appropriate number of explanatory variables.
+
+Your answer should include:
+
+-	the decision-making process for building your regression model, including explanation of any supporting preliminary analyses required;
+
+-	comment on the performance of the model, overall model fit and the validity of model assumptions.
+
+
+**(25 marks)**
+
+### Answer:
+
+
+```{r Q6}
+
+# Building regression model
+model = lm(working_score ~ age + hours + gender, data = data)
+
+# Assessing model performance
+summary(model)
+
+```
+
+
+# Question 7: Report 
+
+Write a short report of 300-500 words to the client outlining your findings, including interpretation of what your regression model reveals about patterns in ‘working score’.
+
+ 
+**(30 marks)**
+
+### Answer:
+
+
+
+
+
+
+# End matter - Session Information
+
+Do not edit this part. Make sure that you compile your document so that the information about your session (including software / package versions) is included in your submission.
+
+```{r}
+sessionInfo()
+```

@@ -1,0 +1,16 @@
+08:33:in(Second Door),08:35:(Second Door),08:37:(Main Door),09:04:out(Second Door),09:09:in(Second Door),
+
+09:15:out(Second Door),09:15:(Second Door),09:18:(Second Door),09:52:in(Second Door),09:54:(Second Door),
+
+10:00:out(Main Door),10:17:in(Main Door),10:53:out(Second Door),11:47:in(Second Door),11:47:(Second Door),
+
+11:49:(Second Door),11:50:(Second Door),13:08:out(Second Door),13:09:(Second Door),13:12:(Second Door),
+
+13:14:in(Second Door),13:36:out(Second Door),13:36:(Second Door),14:27:in(Second Door),14:32:out(Main Door),
+
+14:48:in(Second Door),14:48:(Second Door),14:49:(Second Door),14:52:(Main Door),14:56:out(Second Door),
+
+
+14:57:(Second Door),14:59:(Second Door),15:04:in(Second Door),16:22:out(Second Door),16:34:in(Second Door),
+
+19:58:out(Main Door), 
